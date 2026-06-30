@@ -169,26 +169,6 @@ Voir `.env.example` :
 
 Un fichier CSV d'exemple est disponible dans `samples/sample_sales.csv`. Vous pouvez aussi importer un fichier Excel de ventes avec des colonnes comme : date, client, produit, chiffre_affaires, marge, ville, canal, vendeur, statut_paiement.
 
-## Captures à ajouter au portfolio
-
-- Dashboard KPI avec filtres ouverts.
-- Graphique Top clients / Top produits.
-- Page Détail dataset avec score qualité.
-- Page Prédictions avec fourchette basse/haute.
-- Page Alertes avec statuts.
-- Réponse assistant IA avec top clients.
-- Export PDF du rapport.
-- Catalogue KPI.
-
-## Phrase CV
-
-> Développement d'une application SaaS BI full-stack pour PME avec import Excel/CSV, nettoyage automatisé, dashboard interactif filtrable, assistant IA avec fallback local, prédictions de chiffre d'affaires et exports PDF/Excel.
-
-
-## Phrase LinkedIn
-
-> J'ai développé DataPilot PME, une plateforme BI automatisée pour PME qui transforme des fichiers Excel/CSV en dashboards interactifs, analyses qualité, prédictions de chiffre d'affaires, exports PDF/Excel et recommandations métier assistées par IA.
-
 ## Améliorations futures
 
 - Ajouter une gestion multi-utilisateurs avancée avec rôles et permissions.
