@@ -1,0 +1,15 @@
+.venv/
+node_modules/
+.next/
+__pycache__/
+*.pyc
+backend/uploads/
+.env
+.cache/
+logs/
+backend/db_backups/
+backend/*.db
+backend/*.db-*
+.env.local
+*.tsbuildinfo
+.codex/
