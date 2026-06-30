@@ -87,14 +87,20 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true);
       try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("selectedDataset");
+          localStorage.removeItem("selectedFile");
+          localStorage.removeItem("activeDataset");
+        }
+        setSelectedFile(null);
+        setAnalysis(null);
+        setFilters(emptyFilters);
+        setQuestion("");
+        setAssistantHistory([]);
         const me = await getMe();
         setUser(me);
         const files = await getHistory();
         setHistory(files);
-        if (files[0]) {
-          setSelectedFile(files[0].id);
-          setAnalysis(await getAnalysis(files[0].id));
-        }
       } finally {
         setLoading(false);
       }
@@ -175,7 +181,7 @@ export default function DashboardPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-400">DataPilot PME</p>
           <h1 className="mt-1 text-4xl font-semibold tracking-tight text-white">Tableau de bord</h1>
-          <p className="mt-2 text-base text-slate-400">Bienvenue {user?.name || "utilisateur"}. {activeFile ? `Analyse de ${activeFile.original_name}` : "Importez un fichier pour démarrer."}</p>
+          <p className="mt-2 text-base text-slate-400">Bienvenue {user?.name || "utilisateur"}. {activeFile ? `Analyse de ${activeFile.original_name}` : "Importez un fichier ou sélectionnez un fichier dans l'historique pour afficher le dashboard."}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link href="/kpi" className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-100 hover:border-cyan-400">Catalogue KPI</Link>
@@ -208,7 +214,7 @@ export default function DashboardPage() {
                     <button onClick={() => selectHistoryItem(item.id)} className="w-full text-left">
                       <div className="flex items-center justify-between gap-3">
                         <div className="truncate text-sm font-medium text-slate-100" title={item.original_name}>{item.original_name}</div>
-                        <div className="shrink-0 text-xs text-slate-400">{numberFormatter.format(item.row_count)} lignes</div>
+                        <div className="flex shrink-0 items-center gap-2 text-xs text-slate-400"><span>{numberFormatter.format(item.row_count)} lignes</span><span className="rounded-md border border-slate-700 px-2 py-1 text-cyan-200">Analyser</span></div>
                       </div>
                     </button>
                   </li>
@@ -279,7 +285,7 @@ export default function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-1"><div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><h3 className="text-lg font-semibold text-slate-100">Insights automatiques</h3><ul className="mt-4 space-y-3 text-sm text-slate-300">{(analysis.insights || []).map((insight: string, index: number) => <li key={index} className="rounded-lg border border-slate-700 bg-slate-950/70 p-3">{insight}</li>)}</ul></div><div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><h3 className="text-lg font-semibold text-slate-100">Alertes</h3><ul className="mt-4 space-y-3 text-sm text-slate-300">{(analysis.alerts || []).map((alert: any, index: number) => <li key={index} className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">{alert.message}</li>)}{!analysis.alerts?.length ? <li className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">Aucune alerte détectée.</li> : null}</ul></div></div>
           </section>
         </>
-      ) : <div className="mt-8"><EmptyState title="Aucun dashboard disponible" description="Importez un fichier pour générer un dashboard avec KPI et graphiques." actionLabel="Importer un fichier" actionHref="/dashboard" /></div>}
+      ) : <div className="mt-8"><EmptyState title="Aucun dataset sélectionné" description="Importez un fichier ou sélectionnez un fichier dans l'historique pour afficher le dashboard." actionLabel="Voir l'historique" actionHref="/dashboard" /></div>}
     </div>
   );
 }

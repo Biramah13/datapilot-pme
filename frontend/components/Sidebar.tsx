@@ -24,9 +24,7 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="mt-auto rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-xs leading-5 text-slate-400">
-        Portfolio data/BI<br />FastAPI + Next.js + ML
-      </div>
+
     </aside>
   );
 }

@@ -32,17 +32,18 @@ export default function PredictionsPage() {
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [analysis, setAnalysis] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
+        setSelectedFile(null);
+        setAnalysis(null);
         const files = await getHistory();
         setHistory(files);
-        if (files[0]) {
-          setSelectedFile(files[0].id);
-          setAnalysis(await getAnalysis(files[0].id));
-        }
+      } catch (err: any) {
+        setError(err?.message || "Impossible de charger l'historique des datasets.");
       } finally {
         setLoading(false);
       }
@@ -53,8 +54,12 @@ export default function PredictionsPage() {
   async function selectFile(fileId: number) {
     setSelectedFile(fileId);
     setLoading(true);
+    setError("");
     try {
       setAnalysis(await getAnalysis(fileId));
+    } catch (err: any) {
+      setError(err?.message || "Impossible de charger les prédictions.");
+      setAnalysis(null);
     } finally {
       setLoading(false);
     }
@@ -87,109 +92,51 @@ export default function PredictionsPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-400">Data Science</p>
           <h1 className="mt-1 text-4xl font-semibold tracking-tight text-white">Prédictions</h1>
-          <p className="mt-2 text-base text-slate-400">Prévision du chiffre d'affaires sur 3 mois, tendance et mois anormaux.</p>
+          <p className="mt-2 text-base text-slate-400">Choisissez un dataset pour afficher la prévision du chiffre d'affaires.</p>
         </div>
         <Link href="/dashboard" className="w-fit rounded-lg border border-slate-700 px-4 py-2 text-sm hover:border-cyan-400">Retour dashboard</Link>
       </div>
 
+      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</div> : null}
+
       {history.length ? (
         <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
-          <label className="text-sm text-slate-300">
-            Dataset
-            <select value={selectedFile || ""} onChange={(event) => selectFile(Number(event.target.value))} className="mt-2 h-11 w-full max-w-xl rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm outline-none focus:border-cyan-400">
-              {history.map((item) => <option key={item.id} value={item.id}>{item.original_name}</option>)}
-            </select>
-          </label>
+          <h2 className="text-lg font-semibold text-white">Historique des datasets</h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {history.map((item) => (
+              <button key={item.id} onClick={() => selectFile(item.id)} className={`rounded-lg border p-4 text-left hover:border-cyan-400 ${item.id === selectedFile ? "border-cyan-500/60 bg-cyan-500/10" : "border-slate-800 bg-slate-950/60"}`}>
+                <div className="truncate text-sm font-semibold text-white" title={item.original_name}>{item.original_name}</div>
+                <div className="mt-2 text-xs text-slate-400">{item.row_count?.toLocaleString("fr-FR")} lignes</div>
+                <div className="mt-3 text-xs font-semibold uppercase tracking-wide text-cyan-300">Ouvrir</div>
+              </button>
+            ))}
+          </div>
         </section>
       ) : <EmptyState title="Aucun fichier" description="Importez un fichier pour générer des prédictions." actionLabel="Dashboard" actionHref="/dashboard" />}
 
-      {analysis ? (
+      {!analysis ? (
+        <EmptyState title="Aucun dataset sélectionné" description="Aucun dataset sélectionné. Retournez au dashboard et choisissez un fichier dans l'historique." actionLabel="Retour dashboard" actionHref="/dashboard" />
+      ) : (
         <>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <div className="text-sm uppercase tracking-wide text-slate-500">Tendance</div>
-              <div className="mt-3 text-3xl font-semibold text-white">{trendLabel(prediction.trend)}</div>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <div className="text-sm uppercase tracking-wide text-slate-500">Confiance</div>
-              <div className="mt-3 text-3xl font-semibold text-white">{prediction.confidence_score ?? 0} %</div>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <div className="text-sm uppercase tracking-wide text-slate-500">Prochain mois</div>
-              <div className="mt-3 text-3xl font-semibold text-white">{prediction.forecast?.[0] ? formatCurrency(prediction.forecast[0].value) : "-"}</div>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <div className="text-sm uppercase tracking-wide text-slate-500">Mois anormaux</div>
-              <div className="mt-3 text-3xl font-semibold text-white">{prediction.anomalies?.length || 0}</div>
-            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><div className="text-sm uppercase tracking-wide text-slate-500">Tendance</div><div className="mt-3 text-3xl font-semibold text-white">{trendLabel(prediction.trend)}</div></div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><div className="text-sm uppercase tracking-wide text-slate-500">Confiance</div><div className="mt-3 text-3xl font-semibold text-white">{prediction.confidence_score ?? 0} %</div></div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><div className="text-sm uppercase tracking-wide text-slate-500">Prochain mois</div><div className="mt-3 text-3xl font-semibold text-white">{prediction.forecast?.[0] ? formatCurrency(prediction.forecast[0].value) : "-"}</div></div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><div className="text-sm uppercase tracking-wide text-slate-500">Mois anormaux</div><div className="mt-3 text-3xl font-semibold text-white">{prediction.anomalies?.length || 0}</div></div>
           </section>
 
           <section className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-            <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Historique et prévision</h2>
-                <p className="mt-2 text-sm text-slate-400">{prediction.message}</p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm leading-6 text-slate-300">
-                <span className="font-semibold text-white">Méthode : </span>{prediction.method || "Prévision calculée à partir des ventes mensuelles."}
-              </div>
-            </div>
-
-            {prediction.trend === "insufficient_data" ? (
-              <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-                Les données disponibles ne suffisent pas pour produire une prévision robuste. Importez au moins 3 mois d'historique avec une colonne date et une colonne chiffre d'affaires.
-              </div>
-            ) : null}
-
-            <div className="mt-5 h-[480px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ left: 20, right: 30, bottom: 20 }}>
-                  <CartesianGrid stroke="#0f172a" />
-                  <XAxis dataKey="month" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" width={90} tickFormatter={axisCurrency} allowDecimals={false} />
-                  <Tooltip
-                    formatter={(value: unknown, name: unknown) => [formatCurrency(value), String(name).replace("borne_", "borne ")]}
-                    contentStyle={{ background: "#020617", border: "1px solid #334155", borderRadius: 8 }}
-                    labelStyle={{ color: "#e2e8f0" }}
-                  />
-                  <Line type="monotone" dataKey="historique" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4 }} connectNulls />
-                  <Line type="monotone" dataKey="prévision" stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={3} dot={{ r: 4 }} connectNulls />
-                  <Line type="monotone" dataKey="borne_basse" stroke="#fbbf24" strokeDasharray="2 5" strokeWidth={2} dot={false} connectNulls />
-                  <Line type="monotone" dataKey="borne_haute" stroke="#fbbf24" strokeDasharray="2 5" strokeWidth={2} dot={false} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]"><div><h2 className="text-xl font-semibold text-white">Historique et prévision</h2><p className="mt-2 text-sm text-slate-400">{prediction.message}</p></div><div className="rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm leading-6 text-slate-300"><span className="font-semibold text-white">Méthode : </span>{prediction.method || "Prévision calculée à partir des ventes mensuelles."}</div></div>
+            {prediction.trend === "insufficient_data" ? <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">Les données disponibles ne suffisent pas pour produire une prévision robuste. Importez au moins 3 mois d'historique avec une colonne date et une colonne chiffre d'affaires.</div> : null}
+            <div className="mt-5 h-[480px]"><ResponsiveContainer width="100%" height="100%"><LineChart data={chartData} margin={{ left: 20, right: 30, bottom: 20 }}><CartesianGrid stroke="#0f172a" /><XAxis dataKey="month" stroke="#94a3b8" /><YAxis stroke="#94a3b8" width={90} tickFormatter={axisCurrency} allowDecimals={false} /><Tooltip formatter={(value: unknown, name: unknown) => [formatCurrency(value), String(name).replace("borne_", "borne ")]} contentStyle={{ background: "#020617", border: "1px solid #334155", borderRadius: 8 }} labelStyle={{ color: "#e2e8f0" }} /><Line type="monotone" dataKey="historique" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4 }} connectNulls /><Line type="monotone" dataKey="prévision" stroke="#f59e0b" strokeDasharray="6 4" strokeWidth={3} dot={{ r: 4 }} connectNulls /><Line type="monotone" dataKey="borne_basse" stroke="#fbbf24" strokeDasharray="2 5" strokeWidth={2} dot={false} connectNulls /><Line type="monotone" dataKey="borne_haute" stroke="#fbbf24" strokeDasharray="2 5" strokeWidth={2} dot={false} connectNulls /></LineChart></ResponsiveContainer></div>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <h2 className="text-xl font-semibold text-white">Prévision 3 mois</h2>
-              <ul className="mt-4 space-y-3">
-                {(prediction.forecast || []).length ? prediction.forecast.map((item: any) => (
-                  <li key={item.month} className="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="font-medium text-slate-200">{item.month}</span>
-                      <span className="font-semibold text-white">{formatCurrency(item.value)}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-400">Fourchette estimée : {formatCurrency(item.low)} à {formatCurrency(item.high)}</p>
-                  </li>
-                )) : <li className="rounded-lg border border-slate-800 bg-slate-950/70 p-4 text-slate-300">Aucune prévision disponible pour ce dataset.</li>}
-              </ul>
-            </div>
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-              <h2 className="text-xl font-semibold text-white">Mois anormaux détectés</h2>
-              <ul className="mt-4 space-y-3">
-                {(prediction.anomalies || []).length ? prediction.anomalies.map((item: any) => (
-                  <li key={item.month} className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-slate-200">
-                    <div className="font-semibold text-white">{item.month} : {formatCurrency(item.value)}</div>
-                    <p className="mt-2 text-sm text-amber-100">{item.reason || "Ce mois s'écarte fortement du niveau moyen observé."}</p>
-                  </li>
-                )) : <li className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-slate-200">Aucun mois fortement anormal détecté.</li>}
-              </ul>
-            </div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><h2 className="text-xl font-semibold text-white">Prévision 3 mois</h2><ul className="mt-4 space-y-3">{(prediction.forecast || []).length ? prediction.forecast.map((item: any) => <li key={item.month} className="rounded-lg border border-slate-800 bg-slate-950/70 p-4"><div className="flex items-center justify-between gap-4"><span className="font-medium text-slate-200">{item.month}</span><span className="font-semibold text-white">{formatCurrency(item.value)}</span></div><p className="mt-2 text-sm text-slate-400">Fourchette estimée : {formatCurrency(item.low)} à {formatCurrency(item.high)}</p></li>) : <li className="rounded-lg border border-slate-800 bg-slate-950/70 p-4 text-slate-300">Aucune prévision disponible pour ce dataset.</li>}</ul></div>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-6"><h2 className="text-xl font-semibold text-white">Mois anormaux détectés</h2><ul className="mt-4 space-y-3">{(prediction.anomalies || []).length ? prediction.anomalies.map((item: any) => <li key={item.month} className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-slate-200"><div className="font-semibold text-white">{item.month} : {formatCurrency(item.value)}</div><p className="mt-2 text-sm text-amber-100">{item.reason || "Ce mois s'écarte fortement du niveau moyen observé."}</p></li>) : <li className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-slate-200">Aucun mois fortement anormal détecté.</li>}</ul></div>
           </section>
         </>
-      ) : null}
+      )}
     </div>
   );
 }

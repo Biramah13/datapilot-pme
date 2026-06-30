@@ -38,7 +38,7 @@ export default function DatasetDetailPage() {
     try { setDetail(await getDatasetDetail(fileId)); } finally { setLoading(false); }
   }
 
-  useEffect(() => { if (fileId) load(); }, [fileId]);
+  useEffect(() => { if (Number.isFinite(fileId) && fileId > 0) load(); else setLoading(false); }, [fileId]);
 
   async function handleClean() {
     setStatus("Nettoyage en cours...");
@@ -70,7 +70,7 @@ export default function DatasetDetailPage() {
   }
 
   if (loading) return <Loader />;
-  if (!detail) return <div className="text-slate-300">Dataset introuvable.</div>;
+  if (!detail) return <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 text-slate-300">Aucun dataset sélectionné. Retournez au dashboard et choisissez un fichier dans l'historique.</div>;
 
   return (
     <div className="mx-auto w-full max-w-none space-y-6 px-2 xl:px-6 2xl:px-10">
